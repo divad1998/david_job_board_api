@@ -6,6 +6,7 @@ use App\Http\Requests\CreateJobRequest;
 use App\Http\Requests\UpdateJobRequest;
 use App\Models\Job;
 use App\Models\JobApplication;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class JobController extends Controller
@@ -14,6 +15,11 @@ class JobController extends Controller
         $data = $request->validated();
         $data['user_id'] = auth()->id();
         $job = Job::create($data);
+
+        $company = User::find($job->user_id, ['name', 'logo']);
+        $job->company = $company->name;
+        $job->company_logo = $company->logo;
+        $job->makeHidden(['user_id']);
 
         return response()->json([
             'status'  => 'success',
@@ -30,6 +36,14 @@ class JobController extends Controller
         }
 
         $jobs = $query->where('user_id', $userId)->latest()->paginate(10);
+        // Transform the jobs to include company name and logo
+        $jobs->getCollection()->transform(function ($job) {
+            $company = User::find($job->user_id, ['name', 'logo']);
+            $job->company_name = $company ? $company->name : null;
+            $job->company_logo = $company ? $company->logo : null;
+            $job->makeHidden(['user_id']);
+            return $job;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -51,6 +65,11 @@ class JobController extends Controller
 
         $data = $request->validated();
         $job->update($data);
+
+        $company = User::find($job->user_id, ['name', 'logo']);
+        $job->company = $company->name;
+        $job->company_logo = $company->logo;
+        $job->makeHidden(['user_id']);
 
         return response()->json([
             'status'  => 'success',
@@ -94,6 +113,12 @@ class JobController extends Controller
 
         $applications = JobApplication::where(['user_job_id' => $job->id, 'user_id' => $userId])
                                         ->paginate(10);
+        //transform
+        $applications->getCollection()->transform(function ($application) {
+            $application->job_id = $application->user_job_id;
+            return $application;
+        });
+        
         return response()->json([
             'status' => 'success',
             'message' => "Applications fetched successfully.",

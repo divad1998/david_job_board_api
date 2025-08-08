@@ -14,6 +14,8 @@ class AuthController extends Controller
         $user = new User;
         $user->name = $request->name; $user->email = $request->email;
         $user->password = $request->password;
+        $user->logo = $request->file('avatar') ? $request->file('avatar')->store('avatars', 'public') : null;
+        $user->email_verified_at = now();
         $user->save();
 
         $user->avatar = $user->logo;

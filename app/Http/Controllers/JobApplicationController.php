@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\JobApplicationRequest;
 use App\Models\Job;
 use App\Models\JobApplication;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class JobApplicationController extends Controller
@@ -58,6 +59,13 @@ class JobApplicationController extends Controller
             $query->where('location', 'like', "%{$location}%");
         }
         $jobs = $query->distinct()->paginate(10);
+        $jobs->getCollection()->transform(function ($job) {
+            $company = User::find($job->user_id, ['name', 'logo']);
+            $job->company_name = $company ? $company->name : null;
+            $job->company_logo = $company ? $company->logo : null;
+            $job->makeHidden(['user_id']);
+            return $job;
+        });
 
         return response()->json([
             'status' => 'success', 

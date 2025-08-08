@@ -13,4 +13,8 @@ class JobApplication extends Model
         'phone', 'location', 'cv', 'user_id', 'user_job_id'
     ];
 
+    protected $hidden = [
+        'user_id', 'user_job_id', 'created_at', 'updated_at', 'id'
+    ];
+
 }
