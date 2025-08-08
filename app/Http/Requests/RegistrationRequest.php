@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 
 class RegistrationRequest extends FormRequest
@@ -28,5 +30,16 @@ class RegistrationRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()],
             'avatar' => 'nullable|image|mimes:jpeg,jpg,gif|max:2048'
         ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422)
+        );
     }
 }
